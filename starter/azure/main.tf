@@ -50,10 +50,6 @@ resource "azurerm_mssql_server" "example" {
 
 
 # Create a static web app
-provider "azurerm" {
-  features {}
-}
-
 resource "azurerm_service_plan" "example" {
   name                = "example"
   resource_group_name = data.azurerm_resource_group.udacity.name
