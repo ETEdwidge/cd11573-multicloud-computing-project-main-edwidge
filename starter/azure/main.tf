@@ -1,5 +1,5 @@
 data "azurerm_resource_group" "udacity" {
-  name     = "Regroup_4dCF45VNi1xsDgPFTtBZh"
+  name     = "Regroup_8hflMmVfs"
 }
 
 resource "azurerm_container_group" "udacity" {
@@ -30,52 +30,42 @@ resource "azurerm_container_group" "udacity" {
 }
 
 ####### Your Additions Will Start Here ######
-# Dynamo tables creation
-resource "aws_dynamodb_table" "basic-dynamodb-table" {
-  name           = "GameScores"
-  billing_mode   = "PROVISIONED"
-  read_capacity  = 20
-  write_capacity = 20
-  hash_key       = "UserId"
-  range_key      = "GameTitle"
+# Azure sql
+resource "azurerm_storage_account" "example" {
+  name                     = "examplesa"
+  resource_group_name      = data.azurerm_resource_group.udacity.name
+  location                 = data.azurerm_resource_group.udacity.location
+  account_tier             = "Standard"
+  account_replication_type = "LRS"
+}
 
-  attribute {
-    name = "UserId"
-    type = "S"
-  }
+resource "azurerm_mssql_server" "example" {
+  name                         = "example-sqlserver"
+  resource_group_name          = data.azurerm_resource_group.udacity.name
+  location                     = data.azurerm_resource_group.udacity.location
+  version                      = "12.0"
+  administrator_login          = "4dm1n157r470r"
+  administrator_login_password = "4-v3ry-53cr37-p455w0rd"
+}
 
-  attribute {
-    name = "GameTitle"
-    type = "S"
-  }
-
-  attribute {
-    name = "TopScore"
-    type = "N"
-  }
-
-  ttl {
-    attribute_name = "TimeToExist"
-    enabled        = false
-  }
-
-  global_secondary_index {
-    name               = "GameTitleIndex"
-    hash_key           = "GameTitle"
-    range_key          = "TopScore"
-    write_capacity     = 10
-    read_capacity      = 10
-    projection_type    = "INCLUDE"
-    non_key_attributes = ["UserId"]
-  }
+resource "azurerm_mssql_database" "test" {
+  name           = "acctest-db-d"
+  server_id      = azurerm_mssql_server.example.id
+  collation      = "SQL_Latin1_General_CP1_CI_AS"
+  license_type   = "LicenseIncluded"
+  max_size_gb    = 4
+  read_scale     = true
+  sku_name       = "S0"
+  zone_redundant = true
 
   tags = {
-    Name        = "dynamodb-table-1"
-    Environment = "production"
+    foo = "bar"
   }
 }
 
-# Create AWS S3 bucket
-resource "aws_s3_bucket" "example" {
-  bucket = "my-tf-edwidge-bucket"
+# Create a static web app
+resource "azurerm_static_site" "webApp" {
+  name                = "webApp"
+  resource_group_name = data.azurerm_resource_group.udacity.name
+  location            = "West Europe"
 }
